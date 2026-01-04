@@ -16,11 +16,6 @@ def main():
         help="Directory to scan for files containing image URLs (e.g., markdown, HTML)"
     )
     parser.add_argument(
-        "--download-dir", 
-        required=True, 
-        help="Directory to save downloaded raw images"
-    )
-    parser.add_argument(
         "--output-dir", 
         required=True, 
         help="Directory to save converted WebP images"
@@ -63,7 +58,6 @@ def main():
 
     etl = ImageETL(
         content_dir=args.scan_dir,
-        raw_dir=args.download_dir,
         webp_dir=args.output_dir,
         webp_base_url=args.new_url_prefix,
         quality=args.quality,

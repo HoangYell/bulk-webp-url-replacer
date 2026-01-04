@@ -33,6 +33,6 @@ dependencies = [
 bulk-webp-url-replacer = "bulk_webp_url_replacer.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/HoangGeek/bulk-webp-url-replacer"
-Repository = "https://github.com/HoangGeek/bulk-webp-url-replacer"
-Issues = "https://github.com/HoangGeek/bulk-webp-url-replacer/issues"
+Homepage = "https://github.com/HoangYell/bulk-webp-url-replacer"
+Repository = "https://github.com/HoangYell/bulk-webp-url-replacer"
+Issues = "https://github.com/HoangYell/bulk-webp-url-replacer/issues"

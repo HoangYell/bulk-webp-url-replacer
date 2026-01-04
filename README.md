@@ -35,21 +35,18 @@ pip install -e .
 # Dry run - preview what would be processed
 bulk-webp-url-replacer \
   --scan-dir ./content \
-  --download-dir ./downloads \
   --output-dir ./webp_images \
   --dry-run
 
 # Full run with custom URL prefix
 bulk-webp-url-replacer \
   --scan-dir ./content \
-  --download-dir ./downloads \
   --output-dir ./webp_images \
   --new-url-prefix "https://cdn.example.com/images"
 
 # Faster with more threads
 bulk-webp-url-replacer \
   --scan-dir ./content \
-  --download-dir ./downloads \
   --output-dir ./webp_images \
   --new-url-prefix "https://cdn.example.com/images" \
   --threads 8
@@ -60,7 +57,6 @@ bulk-webp-url-replacer \
 ```bash
 python -m bulk_webp_url_replacer \
   --scan-dir ./content \
-  --download-dir ./downloads \
   --output-dir ./webp_images \
   --new-url-prefix "https://cdn.example.com/images"
 ```
@@ -70,7 +66,6 @@ python -m bulk_webp_url_replacer \
 | Option | Required | Default | Description |
 |--------|----------|---------|-------------|
 | `--scan-dir` | Yes | - | Directory to scan for files containing image URLs |
-| `--download-dir` | Yes | - | Directory to save downloaded raw images |
 | `--output-dir` | Yes | - | Directory to save converted WebP images |
 | `--new-url-prefix` | No | - | URL prefix to replace old image URLs |
 | `--quality` | No | 80 | WebP quality 1-100 |

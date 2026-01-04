@@ -24,7 +24,6 @@ class ImageETL:
     def __init__(
         self,
         content_dir: str,
-        raw_dir: str,
         webp_dir: str,
         webp_base_url: Optional[str] = None,
         quality: int = 80,
@@ -37,7 +36,6 @@ class ImageETL:
         
         Args:
             content_dir: Directory containing markdown files
-            raw_dir: Directory to save raw downloaded images
             webp_dir: Directory to save converted WebP images
             webp_base_url: Base URL for WebP images (if None, uses relative path)
             quality: WebP quality (1-100)
@@ -46,7 +44,6 @@ class ImageETL:
             threads: Number of parallel download threads (default: 4)
         """
         self.content_dir = content_dir
-        self.raw_dir = raw_dir
         self.webp_dir = webp_dir
         self.webp_base_url = webp_base_url
         self.exclude_extensions = [ext.lower().lstrip('.') for ext in (exclude_extensions or [])]
@@ -101,7 +98,6 @@ class ImageETL:
         
         # Create directories
         if not dry_run:
-            os.makedirs(self.raw_dir, exist_ok=True)
             os.makedirs(self.webp_dir, exist_ok=True)
 
         # Load existing mappings to skip already processed
