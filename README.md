@@ -5,10 +5,10 @@ Bulk convert images to WebP and automatically update URLs in markdown files with
 ## Features
 
 - 🔍 **Extract** image URLs from markdown files (frontmatter, galleries, inline images)
-- 📥 **Download** images from remote URLs
+- 📥 **Download** images from remote URLs (parallel downloads)
 - 🖼️ **Convert** to optimized WebP format
 - 🔄 **Replace** original URLs with new CDN-prefixed paths
-- ⏭️ **Skip** already-processed images on subsequent runs
+- ⏭️ **Skip** already-processed images and excluded extensions
 - 👀 **Dry-run** mode to preview changes
 
 ## Installation
@@ -33,16 +33,24 @@ pip install -e .
 # Dry run - preview what would be processed
 bulk-webp-url-replacer \
   --scan-dir ./content \
-  --download-dir ./raw_images \
+  --download-dir ./downloads \
   --output-dir ./webp_images \
   --dry-run
 
 # Full run with custom URL prefix
 bulk-webp-url-replacer \
   --scan-dir ./content \
-  --download-dir ./raw_images \
+  --download-dir ./downloads \
   --output-dir ./webp_images \
   --new-url-prefix "https://cdn.example.com/images"
+
+# Faster with more threads
+bulk-webp-url-replacer \
+  --scan-dir ./content \
+  --download-dir ./downloads \
+  --output-dir ./webp_images \
+  --new-url-prefix "https://cdn.example.com/images" \
+  --threads 8
 ```
 
 ### As Python Module
@@ -50,22 +58,24 @@ bulk-webp-url-replacer \
 ```bash
 python -m bulk_webp_url_replacer \
   --scan-dir ./content \
-  --download-dir ./raw_images \
+  --download-dir ./downloads \
   --output-dir ./webp_images \
   --new-url-prefix "https://cdn.example.com/images"
 ```
 
 ### Options
 
-| Option | Required | Description |
-|--------|----------|-------------|
-| `--scan-dir` | Yes | Directory to scan for files containing image URLs |
-| `--download-dir` | Yes | Directory to save downloaded raw images |
-| `--output-dir` | Yes | Directory to save converted WebP images |
-| `--new-url-prefix` | No | URL prefix to replace old image URLs |
-| `--quality` | No | WebP quality 1-100 (default: 80) |
-| `--max-width` | No | Max image width in pixels (default: 1200) |
-| `--dry-run` | No | Preview changes without downloading or modifying files |
+| Option | Required | Default | Description |
+|--------|----------|---------|-------------|
+| `--scan-dir` | Yes | - | Directory to scan for files containing image URLs |
+| `--download-dir` | Yes | - | Directory to save downloaded raw images |
+| `--output-dir` | Yes | - | Directory to save converted WebP images |
+| `--new-url-prefix` | No | - | URL prefix to replace old image URLs |
+| `--quality` | No | 80 | WebP quality 1-100 |
+| `--max-width` | No | 1200 | Max image width in pixels |
+| `--exclude-ext` | No | gif svg webp ico | File extensions to skip |
+| `--threads` | No | 4 | Number of parallel download threads |
+| `--dry-run` | No | - | Preview changes without downloading or modifying files |
 
 ## Supported Patterns
 

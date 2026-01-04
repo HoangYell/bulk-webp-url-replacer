@@ -3,8 +3,9 @@ Image ETL Pipeline - Orchestrates the download, convert, and update workflow.
 """
 import os
 import json
-from typing import Optional
+from typing import Optional, List, Tuple
 from urllib.parse import urlparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from .etl_types import ETLResult
 from .extractor import ImageURLExtractor
@@ -27,7 +28,9 @@ class ImageETL:
         webp_dir: str,
         webp_base_url: Optional[str] = None,
         quality: int = 80,
-        max_width: int = 1200
+        max_width: int = 1200,
+        exclude_extensions: Optional[List[str]] = None,
+        threads: int = 4
     ):
         """
         Initialize the ETL pipeline.
@@ -39,11 +42,15 @@ class ImageETL:
             webp_base_url: Base URL for WebP images (if None, uses relative path)
             quality: WebP quality (1-100)
             max_width: Maximum image width
+            exclude_extensions: List of file extensions to skip (e.g., ['gif'])
+            threads: Number of parallel download threads (default: 4)
         """
         self.content_dir = content_dir
         self.raw_dir = raw_dir
         self.webp_dir = webp_dir
         self.webp_base_url = webp_base_url
+        self.exclude_extensions = [ext.lower().lstrip('.') for ext in (exclude_extensions or [])]
+        self.threads = threads
         self.extractor = ImageURLExtractor()
         self.optimizer = ImageOptimizer(quality=quality, max_width=max_width)
         self.mapping_file = os.path.join(webp_dir, 'mapping.json')
@@ -130,28 +137,39 @@ class ImageETL:
 
         # Step 2 & 3: Download and convert each unique URL
         print("\n" + "=" * 60)
-        print("STEP 2 & 3: Downloading and converting images...")
+        print(f"STEP 2 & 3: Downloading and converting images ({self.threads} threads)...")
         print("=" * 60)
         
         new_mappings = {}
+        urls_to_process = []
         
+        # Filter URLs first
         for url in unique_urls:
-            # Skip if already processed
+            original_filename = self._get_filename_from_url(url)
+            _, ext = os.path.splitext(original_filename)
+            
+            if ext.lower().lstrip('.') in self.exclude_extensions:
+                print(f"⏭ Skipping (excluded extension {ext}): {url[:50]}...")
+                result.skipped += 1
+                continue
+                
             if url in existing_mappings:
                 print(f"⏭ Skipping (already processed): {url[:60]}...")
                 result.skipped += 1
                 new_mappings[url] = existing_mappings[url]
                 continue
-                
+            
+            urls_to_process.append(url)
+        
+        print(f"\n📥 Processing {len(urls_to_process)} images...")
+        
+        def process_url(url: str) -> Tuple[str, Optional[str], Optional[str]]:
+            """Process a single URL. Returns (url, webp_filename, error)."""
             try:
                 original_filename = self._get_filename_from_url(url)
                 webp_filename = self._get_webp_filename(original_filename)
-                
-                raw_path = os.path.join(self.raw_dir, original_filename)
                 webp_path = os.path.join(self.webp_dir, webp_filename)
                 
-                # Download and convert
-                print(f"\n📥 Processing: {url[:60]}...")
                 success = self.optimizer.download_and_optimize(
                     url=url,
                     save_path=webp_path,
@@ -159,17 +177,28 @@ class ImageETL:
                 )
                 
                 if success:
+                    return (url, webp_filename, None)
+                else:
+                    return (url, None, f"Failed to process: {url}")
+                    
+            except Exception as e:
+                return (url, None, f"Error processing {url}: {e}")
+        
+        # Process URLs in parallel
+        with ThreadPoolExecutor(max_workers=self.threads) as executor:
+            futures = {executor.submit(process_url, url): url for url in urls_to_process}
+            
+            for future in as_completed(futures):
+                url, webp_filename, error = future.result()
+                
+                if error:
+                    print(f"   ❌ {error}")
+                    result.errors.append(error)
+                else:
                     result.downloaded += 1
                     result.converted += 1
                     new_mappings[url] = webp_filename
-                    print(f"   ✅ Saved as: {webp_filename}")
-                else:
-                    result.errors.append(f"Failed to process: {url}")
-                    
-            except Exception as e:
-                error_msg = f"Error processing {url}: {e}"
-                print(f"   ❌ {error_msg}")
-                result.errors.append(error_msg)
+                    print(f"   ✅ {webp_filename}")
 
         # Save updated mappings
         all_mappings = {**existing_mappings, **new_mappings}

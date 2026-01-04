@@ -42,6 +42,18 @@ def main():
         help="Max image width in pixels (default: 1200)"
     )
     parser.add_argument(
+        "--exclude-ext",
+        nargs="+",
+        default=["gif", "svg", "webp", "ico"],
+        help="File extensions to skip (default: gif svg webp ico). Example: --exclude-ext gif svg"
+    )
+    parser.add_argument(
+        "--threads",
+        type=int,
+        default=4,
+        help="Number of parallel download threads (default: 4)"
+    )
+    parser.add_argument(
         "--dry-run", 
         action="store_true", 
         help="Preview changes without downloading or modifying files"
@@ -55,7 +67,9 @@ def main():
         webp_dir=args.output_dir,
         webp_base_url=args.new_url_prefix,
         quality=args.quality,
-        max_width=args.max_width
+        max_width=args.max_width,
+        exclude_extensions=args.exclude_ext,
+        threads=args.threads
     )
     
     result = etl.run(dry_run=args.dry_run)
@@ -66,4 +80,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
