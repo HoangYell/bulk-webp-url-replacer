@@ -32,42 +32,42 @@ pip install -e .
 ```bash
 # Dry run - preview what would be processed
 bulk-webp-url-replacer \
-  --content ./content \
-  --raw-dir ./raw_images \
-  --webp-dir ./webp_images \
+  --scan-dir ./content \
+  --download-dir ./raw_images \
+  --output-dir ./webp_images \
   --dry-run
 
-# Full run with custom WebP base URL
+# Full run with custom URL prefix
 bulk-webp-url-replacer \
-  --content ./content \
-  --raw-dir ./raw_images \
-  --webp-dir ./webp_images \
-  --webp-base-url "https://cdn.example.com/images"
+  --scan-dir ./content \
+  --download-dir ./raw_images \
+  --output-dir ./webp_images \
+  --new-url-prefix "https://cdn.example.com/images"
 ```
 
 ### As Python Module
 
 ```bash
 python -m bulk_webp_url_replacer \
-  --content ./content \
-  --raw-dir ./raw_images \
-  --webp-dir ./webp_images \
-  --webp-base-url "https://cdn.example.com/images"
+  --scan-dir ./content \
+  --download-dir ./raw_images \
+  --output-dir ./webp_images \
+  --new-url-prefix "https://cdn.example.com/images"
 ```
 
 ### Options
 
 | Option | Required | Description |
 |--------|----------|-------------|
-| `--content` | Yes | Directory containing markdown files |
-| `--raw-dir` | Yes | Directory to save downloaded raw images |
-| `--webp-dir` | Yes | Directory to save converted WebP images |
-| `--webp-base-url` | No | Base URL prefix for WebP images in markdown |
+| `--scan-dir` | Yes | Directory to scan for files containing image URLs |
+| `--download-dir` | Yes | Directory to save downloaded raw images |
+| `--output-dir` | Yes | Directory to save converted WebP images |
+| `--new-url-prefix` | No | URL prefix to replace old image URLs |
 | `--quality` | No | WebP quality 1-100 (default: 80) |
-| `--width` | No | Max image width in pixels (default: 1200) |
-| `--dry-run` | No | Preview without making changes |
+| `--max-width` | No | Max image width in pixels (default: 1200) |
+| `--dry-run` | No | Preview changes without downloading or modifying files |
 
-## Supported Markdown Patterns
+## Supported Patterns
 
 The tool detects image URLs in:
 
@@ -96,9 +96,9 @@ image = "https://example.com/image.jpg"
 
 After running, you'll have:
 
-1. **WebP images** in your `--webp-dir`
+1. **WebP images** in your `--output-dir`
 2. **mapping.json** tracking original → WebP conversions
-3. **Updated markdown files** with new URLs
+3. **Updated files** with new URLs
 
 ## License
 
