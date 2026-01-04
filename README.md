@@ -22,7 +22,7 @@ pip install bulk-webp-url-replacer
 Or install from source:
 
 ```bash
-git clone https://github.com/HoangGeek/bulk-webp-url-replacer.git
+git clone https://github.com/HoangYell/bulk-webp-url-replacer.git
 cd bulk-webp-url-replacer
 pip install -e .
 ```
