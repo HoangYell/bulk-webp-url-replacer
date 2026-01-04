@@ -28,3 +28,7 @@ Thumbs.db
 raw_images/
 webp_images/
 mapping.json
+
+# Local scripts
+run_etl.sh
+
