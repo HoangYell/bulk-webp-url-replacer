@@ -16,7 +16,7 @@ class ImageOptimizer:
         'Accept-Language': 'en-US,en;q=0.9',
     }
 
-    def __init__(self, quality: int = 80, max_width: int = 1200, max_retries: int = 3):
+    def __init__(self, quality: int = 80, max_width: int = 1200, max_retries: int = 2):
         self.quality = quality
         self.max_width = max_width
         self.max_retries = max_retries
