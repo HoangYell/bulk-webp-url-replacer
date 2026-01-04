@@ -100,6 +100,11 @@ image = "https://example.com/image.jpg"
 - https://example.com/photo2.png
 {{< /gallery >}}
 
+# HTML img tags in shortcodes
+{{< embed >}}
+<img src="https://example.com/image.jpg" width="250" height="250"/>
+{{< /embed >}}
+
 # Standard markdown
 ![Alt text](https://example.com/image.jpg)
 ```

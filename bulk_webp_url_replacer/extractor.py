@@ -17,6 +17,8 @@ class ImageURLExtractor:
         re.compile(r'^\s*-\s+(https?://[^\s]+\.(jpg|jpeg|png|gif|webp))\s*$', re.MULTILINE | re.IGNORECASE),
         # Standard markdown images: ![alt](https://...)
         re.compile(r'!\[[^\]]*\]\((https?://[^)]+)\)', re.MULTILINE),
+        # HTML img tags: <img src="https://...">
+        re.compile(r'<img[^>]+src=["\']?(https?://[^"\']+)["\']?', re.IGNORECASE),
     ]
 
     def extract_from_file(self, file_path: str) -> List[Tuple[int, str]]:
