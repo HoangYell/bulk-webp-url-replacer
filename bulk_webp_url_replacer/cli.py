@@ -11,23 +11,23 @@ def main():
     )
     
     parser.add_argument(
-        "--content", 
+        "--scan-dir", 
         required=True, 
-        help="Content directory with markdown files"
+        help="Directory to scan for files containing image URLs (e.g., markdown, HTML)"
     )
     parser.add_argument(
-        "--raw-dir", 
+        "--download-dir", 
         required=True, 
-        help="Directory to save raw downloaded images"
+        help="Directory to save downloaded raw images"
     )
     parser.add_argument(
-        "--webp-dir", 
+        "--output-dir", 
         required=True, 
         help="Directory to save converted WebP images"
     )
     parser.add_argument(
-        "--webp-base-url", 
-        help="Base URL prefix for WebP images in markdown"
+        "--new-url-prefix", 
+        help="URL prefix to replace old image URLs (e.g., https://cdn.example.com/images)"
     )
     parser.add_argument(
         "--quality", 
@@ -36,7 +36,7 @@ def main():
         help="WebP quality 1-100 (default: 80)"
     )
     parser.add_argument(
-        "--width", 
+        "--max-width", 
         type=int, 
         default=1200, 
         help="Max image width in pixels (default: 1200)"
@@ -44,18 +44,18 @@ def main():
     parser.add_argument(
         "--dry-run", 
         action="store_true", 
-        help="Preview without making changes"
+        help="Preview changes without downloading or modifying files"
     )
 
     args = parser.parse_args()
 
     etl = ImageETL(
-        content_dir=args.content,
-        raw_dir=args.raw_dir,
-        webp_dir=args.webp_dir,
-        webp_base_url=args.webp_base_url,
+        content_dir=args.scan_dir,
+        raw_dir=args.download_dir,
+        webp_dir=args.output_dir,
+        webp_base_url=args.new_url_prefix,
         quality=args.quality,
-        max_width=args.width
+        max_width=args.max_width
     )
     
     result = etl.run(dry_run=args.dry_run)
@@ -66,3 +66,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
