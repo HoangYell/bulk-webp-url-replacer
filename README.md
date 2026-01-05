@@ -1,6 +1,8 @@
 # bulk-webp-url-replacer
 
-[link](https://github.com/HoangYell/bulk-webp-url-replacer)
+[![PyPI version](https://badge.fury.io/py/bulk-webp-url-replacer.svg)](https://badge.fury.io/py/bulk-webp-url-replacer)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Bulk convert images to WebP and automatically update URLs in markdown files with a custom CDN prefix.
 
@@ -59,6 +61,37 @@ python -m bulk_webp_url_replacer \
   --scan-dir ./content \
   --output-dir ./webp_images \
   --new-url-prefix "https://cdn.example.com/images"
+```
+
+### Programmatic Usage
+
+```python
+from bulk_webp_url_replacer import ImageETL, ImageURLExtractor
+
+# Full ETL pipeline
+etl = ImageETL(
+    content_dir="./content",
+    webp_dir="./webp_images",
+    webp_base_url="https://cdn.example.com/images",
+    quality=80,
+    max_width=1200,
+    exclude_extensions=["gif", "svg", "webp", "ico"],
+    threads=4
+)
+
+# Dry run to preview changes
+result = etl.run(dry_run=True)
+print(f"Found {result.total_urls} URLs, {result.skipped} already processed")
+
+# Full run
+result = etl.run(dry_run=False)
+print(f"Converted {result.converted} images, {result.failed} failed")
+
+# Or just extract URLs without processing
+extractor = ImageURLExtractor()
+urls = extractor.extract_from_directory("./content")
+for file_path, line_num, url in urls:
+    print(f"{file_path}:{line_num} -> {url}")
 ```
 
 ### Options
