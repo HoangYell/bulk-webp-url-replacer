@@ -32,3 +32,4 @@ mapping.json
 # Local scripts
 run_etl.sh
 
+bash.sh

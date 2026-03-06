@@ -73,7 +73,9 @@ class ImageETL:
         if os.path.exists(self.mapping_file):
             try:
                 with open(self.mapping_file, 'r') as f:
-                    return json.load(f)
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        return data
             except Exception:
                 pass
         return {}
@@ -141,18 +143,31 @@ class ImageETL:
         
         # Filter URLs first
         for url in unique_urls:
-            original_filename = self._get_filename_from_url(url)
-            _, ext = os.path.splitext(original_filename)
-            
-            if ext.lower().lstrip('.') in self.exclude_extensions:
-                print(f"⏭ Skipping (excluded extension {ext}): {url[:50]}...")
-                result.skipped += 1
+            # 1. Skip if already correct (has prefix and is webp)
+            if self.webp_base_url and url.startswith(self.webp_base_url) and url.lower().endswith('.webp'):
                 continue
                 
+            # 2. Check if already in mappings (already processed)
             if url in existing_mappings:
                 print(f"⏭ Skipping (already processed): {url[:60]}...")
                 result.skipped += 1
                 new_mappings[url] = existing_mappings[url]
+                continue
+            
+            # 3. Special case: if already .webp and exists in output dir, but missing/wrong prefix
+            filename = self._get_filename_from_url(url)
+            if url.lower().endswith('.webp'):
+                if os.path.exists(os.path.join(self.webp_dir, filename)):
+                    print(f"⏭ Skipping (exists in output): {url[:60]}...")
+                    result.skipped += 1
+                    new_mappings[url] = filename
+                    continue
+            
+            # 4. Filter by extension for NEW processing
+            _, ext = os.path.splitext(filename)
+            if ext.lower().lstrip('.') in self.exclude_extensions:
+                print(f"⏭ Skipping (excluded extension {ext}): {url[:50]}...")
+                result.skipped += 1
                 continue
             
             urls_to_process.append(url)

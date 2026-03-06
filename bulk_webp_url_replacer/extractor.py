@@ -8,17 +8,20 @@ class ImageURLExtractor:
     """Extracts image URLs from markdown files."""
 
     # Patterns to match image URLs in markdown
+    # Matches strings that are either full http(s) URLs or strings ending in image extensions
+    IMG_EXTS = r'jpg|jpeg|png|webp|gif|svg|ico'
+    
     PATTERNS = [
-        # YAML frontmatter: image: "https://..."
-        re.compile(r'^image:\s*["\']?(https?://[^"\'>\s]+)["\']?\s*$', re.MULTILINE),
-        # TOML frontmatter: image = "https://..."
-        re.compile(r'^image\s*=\s*["\']?(https?://[^"\'>\s]+)["\']?\s*$', re.MULTILINE),
-        # Gallery shortcode URLs: -   https://...
-        re.compile(r'^\s*-\s+(https?://[^\s]+\.(jpg|jpeg|png|gif|webp))\s*$', re.MULTILINE | re.IGNORECASE),
-        # Standard markdown images: ![alt](https://...)
-        re.compile(r'!\[[^\]]*\]\((https?://[^)]+)\)', re.MULTILINE),
-        # HTML img tags: <img src="https://...">
-        re.compile(r'<img[^>]+src=["\']?(https?://[^"\']+)["\']?', re.IGNORECASE),
+        # YAML frontmatter: image: "..."
+        re.compile(fr'^image:\s*["\']?\s*(https?://[^\s"\'>]+|[^\s"\'>]+\.(?:{IMG_EXTS}))\s*["\']?\s*$', re.MULTILINE | re.IGNORECASE),
+        # TOML frontmatter: image = "..."
+        re.compile(fr'^image\s*=\s*["\']?\s*(https?://[^\s"\'>]+|[^\s"\'>]+\.(?:{IMG_EXTS}))\s*["\']?\s*$', re.MULTILINE | re.IGNORECASE),
+        # Gallery shortcode URLs: -   ...
+        re.compile(fr'^\s*-\s+(https?://[^\s)]+|[^\s)]+\.(?:{IMG_EXTS}))\s*$', re.MULTILINE | re.IGNORECASE),
+        # Standard markdown images: ![alt](...)
+        re.compile(fr'!\[[^\]]*\]\(\s*(https?://[^\s)]+|[^\s)]+\.(?:{IMG_EXTS}))\s*\)', re.MULTILINE | re.IGNORECASE),
+        # HTML img tags: <img src="...">
+        re.compile(fr'<img[^>]+src=["\']?\s*(https?://[^\s"\'>]+|[^\s"\'>]+\.(?:{IMG_EXTS}))\s*["\']?', re.IGNORECASE),
     ]
 
     def extract_from_file(self, file_path: str) -> List[Tuple[int, str]]:

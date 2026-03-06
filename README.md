@@ -94,6 +94,110 @@ for file_path, line_num, url in urls:
     print(f"{file_path}:{line_num} -> {url}")
 ```
 
+## Automation
+
+You can use the provided `bash.sh` script to automate the entire process using [uv](https://docs.astral.sh/uv/):
+
+```bash
+#!/usr/bin/env bash
+# ──────────────────────────────────────────────────────────────
+# ETL: Find image URLs → Download → Convert to WebP
+#
+# Scans markdown posts for image URLs, downloads them, 
+# converts to WebP, and saves output to the specified directory.
+#
+# Uses UV for virtual environment management.
+# ──────────────────────────────────────────────────────────────
+set -euo pipefail
+
+# ── Paths ─────────────────────────────────────────────────────
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCAN_DIR="${SCAN_DIR:-/path/to/your/markdown/content}"
+OUTPUT_DIR="${OUTPUT_DIR:-/path/to/output/webp}"
+VENV_DIR="${VENV_DIR:-$SCRIPT_DIR/.venv}"
+NEW_URL_PREFIX="${NEW_URL_PREFIX:-https://your-cdn.com/webp}"
+
+# ── ETL Options (override via env vars) ───────────────────────
+QUALITY="${QUALITY:-80}"
+MAX_WIDTH="${MAX_WIDTH:-1200}"
+THREADS="${THREADS:-4}"
+DRY_RUN="${DRY_RUN:-false}"
+
+# ── Colors ────────────────────────────────────────────────────
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+RED='\033[0;31m'
+NC='\033[0m' # No color
+
+info()  { echo -e "${CYAN}[INFO]${NC}  $*"; }
+warn()  { echo -e "${YELLOW}[WARN]${NC}  $*"; }
+ok()    { echo -e "${GREEN}[ OK ]${NC}  $*"; }
+fail()  { echo -e "${RED}[FAIL]${NC}  $*"; }
+
+# ── Pre-flight checks ────────────────────────────────────────
+if ! command -v uv &>/dev/null; then
+    fail "uv is not installed. Install it from https://docs.astral.sh/uv/"
+    exit 1
+fi
+
+if [ ! -d "$SCAN_DIR" ]; then
+    fail "Scan directory not found: $SCAN_DIR"
+    exit 1
+fi
+
+# ── Virtual environment setup ─────────────────────────────────
+if [ ! -d "$VENV_DIR" ]; then
+    info "Creating virtual environment at $VENV_DIR"
+    uv venv "$VENV_DIR"
+fi
+
+info "Activating virtual environment"
+# shellcheck disable=SC1091
+source "$VENV_DIR/bin/activate"
+
+info "Installing bulk-webp-url-replacer (editable mode)"
+uv pip install -e "$SCRIPT_DIR"
+
+# ── Ensure output directory exists ────────────────────────────
+mkdir -p "$OUTPUT_DIR"
+
+# ── Run ETL ───────────────────────────────────────────────────
+echo ""
+info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+info "  Bulk WebP URL Replacer – ETL"
+info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+info "  Scan dir  : $SCAN_DIR"
+info "  Output dir: $OUTPUT_DIR"
+info "  Quality   : $QUALITY"
+info "  Max width : $MAX_WIDTH"
+info "  Threads   : $THREADS"
+info "  URL Prefix: $NEW_URL_PREFIX"
+info "  Dry run   : $DRY_RUN"
+info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+CMD=(
+    bulk-webp-url-replacer
+    --scan-dir "$SCAN_DIR"
+    --output-dir "$OUTPUT_DIR"
+    --quality "$QUALITY"
+    --max-width "$MAX_WIDTH"
+    --threads "$THREADS"
+    --new-url-prefix "$NEW_URL_PREFIX"
+)
+
+if [ "$DRY_RUN" = "true" ]; then
+    warn "Running in DRY-RUN mode (no files will be modified)"
+    CMD+=(--dry-run)
+fi
+
+"${CMD[@]}"
+
+echo ""
+ok "ETL complete! WebP images saved to: $OUTPUT_DIR"
+```
+
 ### Options
 
 | Option | Required | Default | Description |
