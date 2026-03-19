@@ -12,8 +12,11 @@ def main():
     
     parser.add_argument(
         "--scan-dir", 
-        required=True, 
         help="Directory to scan for files containing image URLs (e.g., markdown, HTML)"
+    )
+    parser.add_argument(
+        "--src-dir",
+        help="Directory of images to convert directly to WebP (bypasses URL extraction)"
     )
     parser.add_argument(
         "--output-dir", 
@@ -56,8 +59,11 @@ def main():
 
     args = parser.parse_args()
 
+    if not args.scan_dir and not args.src_dir:
+        parser.error("At least one of --scan-dir or --src-dir must be provided.")
+
     etl = ImageETL(
-        content_dir=args.scan_dir,
+        content_dir=args.scan_dir or ".",
         webp_dir=args.output_dir,
         webp_base_url=args.new_url_prefix,
         quality=args.quality,
@@ -66,7 +72,10 @@ def main():
         threads=args.threads
     )
     
-    result = etl.run(dry_run=args.dry_run)
+    if args.src_dir:
+        result = etl.run_directory_conversion(src_dir=args.src_dir, dry_run=args.dry_run)
+    else:
+        result = etl.run(dry_run=args.dry_run)
     
     if result.errors:
         sys.exit(1)

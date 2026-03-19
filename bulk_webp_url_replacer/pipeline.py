@@ -3,6 +3,7 @@ Image ETL Pipeline - Orchestrates the download, convert, and update workflow.
 """
 import os
 import json
+from pathlib import Path
 from typing import Optional, List, Tuple
 from urllib.parse import urlparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -272,4 +273,99 @@ class ImageETL:
             if len(result.errors) > 5:
                 print(f"  ... and {len(result.errors) - 5} more errors")
 
+        return result
+
+    def run_directory_conversion(self, src_dir: str, dry_run: bool = False) -> ETLResult:
+        """
+        Convert all images in a directory to WebP.
+        
+        Args:
+            src_dir: Directory containing images to convert
+            dry_run: If True, only show what would be done
+            
+        Returns:
+            ETLResult with statistics
+        """
+        result = ETLResult()
+        src_path = Path(src_dir).resolve()
+        
+        if not src_path.exists():
+            error_msg = f"Source directory {src_dir} does not exist."
+            print(f"❌ {error_msg}")
+            result.errors.append(error_msg)
+            return result
+
+        # Create output directory
+        if not dry_run:
+            os.makedirs(self.webp_dir, exist_ok=True)
+
+        # Supported extensions
+        extensions = ['*.jpg', '*.jpeg', '*.png', '*.bmp', '*.tiff']
+        image_files = []
+        for ext in extensions:
+            # Case-insensitive search by checking both lower and upper
+            image_files.extend(list(src_path.rglob(ext)))
+            image_files.extend(list(src_path.rglob(ext.upper())))
+
+        # Remove duplicates (rglob might find the same file if extension is mixed case like .Png)
+        image_files = sorted(list(set(image_files)))
+        
+        result.total_urls_found = len(image_files)
+        print(f"Found {len(image_files)} images in {src_dir}")
+
+        if dry_run:
+            print("\n[DRY RUN] Would process these images:")
+            for img_path in image_files[:10]:
+                print(f"  - {img_path}")
+            if len(image_files) > 10:
+                print(f"  ... and {len(image_files) - 10} more")
+            return result
+
+        print("\n" + "=" * 60)
+        print(f"CONVERTING IMAGES ({self.threads} threads)...")
+        print("=" * 60)
+
+        def process_image(img_path: Path) -> Tuple[str, str, Optional[str]]:
+            """Process a single local image."""
+            try:
+                original_filename = img_path.name
+                webp_filename = self._get_webp_filename(original_filename)
+                webp_path = os.path.join(self.webp_dir, webp_filename)
+                
+                success = self.optimizer.download_and_optimize(
+                    url=str(img_path),  # ImageOptimizer handles local paths
+                    save_path=webp_path,
+                    format='WEBP'
+                )
+                
+                if success:
+                    return (str(img_path), webp_filename, None)
+                else:
+                    return (str(img_path), None, f"Failed to convert: {img_path}")
+            except Exception as e:
+                return (str(img_path), None, f"Error processing {img_path}: {e}")
+
+        # Process images in parallel
+        with ThreadPoolExecutor(max_workers=self.threads) as executor:
+            futures = {executor.submit(process_image, img): img for img in image_files}
+            
+            for future in as_completed(futures):
+                path_str, webp_filename, error = future.result()
+                
+                if error:
+                    print(f"   ❌ {error}")
+                    result.errors.append(error)
+                else:
+                    result.converted += 1
+                    result.mappings[path_str] = webp_filename
+                    print(f"   ✅ {webp_filename}")
+
+        # Print summary
+        print("\n" + "=" * 60)
+        print("CONVERSION COMPLETE - Summary")
+        print("=" * 60)
+        print(f"Total images found:    {result.total_urls_found}")
+        print(f"Successfully converted: {result.converted}")
+        print(f"Errors:                 {len(result.errors)}")
+        
         return result
